@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block style_block %}
+    <style type="text/css">
+        table.table { width: 60%; }
+    </style>
+{% endblock %}
+
+{% block content %}
+
+    <div class="h1" id="title">All sites scraped</div>
+    <div>&nbsp;</div>
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Site name</th>
+                <th>Results</th>
+                <th>&nbsp;</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for site in sites %}
+                <script>
+                    function showResult(id){
+                        window.location = '/result/' + id;
+                    }
+                </script>
+            {% set site_id = site.key.id() %}
+            <tr>
+                <td class="nowrap">{{ site.site_name }}</td>
+                <td class="nowrap">
+                <select id="{{ site.site_name }}">
+                    {% set results = site.results %}
+                    {% for result in results.split('/') %}
+{#                        {% set result_timestamp = res.key.timestamp() %}#}
+                        <option value="{{ result.split('|')[0] }}">{{ result.split('|')[1] }}</option>
+                    {% endfor %}
+                </select>
+                </td>
+                <td>
+
+                    <button onclick="showResult(document.getElementById('{{ site.site_name }}').value)">Show</button>
+                </td>
+
+            </tr>
+
+            {% else %}
+            <tr><td colspan="2">No site scraped at all</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+
+
+{% endblock content %}
+
+{% block tail_script %}
+
+{% endblock tail_script %}

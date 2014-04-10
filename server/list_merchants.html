@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block style_block %}
+    <style type="text/css">
+        table.table { width: 60%; }
+    </style>
+{% endblock %}
+
+{% block content %}
+
+    <div class="h1" id="title">All merchants</div>
+    <div>&nbsp;</div>
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Point</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for merchant in merchants %}
+            <tr>
+                <td>{{ merchant }}</td>
+                <td>{{ merchants[merchant] }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="3">No merchants yet</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+{% endblock content %}
+
+{% block tail_script %}
+
+{% endblock tail_script %}

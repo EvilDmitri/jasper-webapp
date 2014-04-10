@@ -1,0 +1,19 @@
+
+{% if flashes %}
+    {% set level = flashes[0][1] %}
+    {% set message = flashes[0][0]  %}
+    {% if level == 'error' %}
+        {% set icon = 'icon-exclamation-sign' %}
+    {% elif level == 'success' %}
+        {% set icon = 'icon-ok-sign' %}
+    {% else %}
+        {% set icon = 'icon-info-sign' %}
+    {% endif %}
+
+    <div class="alert alert-{{ level }}">
+        <i class="{{ icon }}"></i>&nbsp;
+        <a class="close" data-dismiss="alert">×</a>
+        {{ message }}
+    </div>
+
+{% endif %}

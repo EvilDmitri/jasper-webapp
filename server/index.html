@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block style_block %}
+    <style type="text/css">
+        table.table { width: 60%; }
+    </style>
+{% endblock %}
+
+{% block content %}
+
+
+    <div class="nowrap">
+
+        <select id="choose_data" class="nowrap" style="width: 400px">
+            {% for result in results %}
+            {% set result_id = result.key.id() %}
+                <option value="{{ result_id }}" onclick="showResult({{ result_id }})">
+                    {{ ' - '.join([result.site_name, result.timestamp.strftime('%b %d, %Y %I:%M %p')]) }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div>
+        <h3>Scraped from {{ site }} on {{ date }}</h3>
+    </div>
+    <table class="table table-bordered table-striped sortable" >
+        <thead style="background-color:#eee; font-weight: bold; cursor: default;">
+            {% if site == 'apple'  %}
+                <tr>
+                   <th >Name</th>
+                   <th>Model</th>
+                   <th>SKU</th>
+                   <th>Condition</th>
+                   <th>Quantity</th>
+                   <th>Location</th>
+                   <th>Date Grabbed</th>
+                </tr>
+            {% endif %}
+
+            {% if site == '' %}
+                <tr>
+                    <th>Vendor</th>
+                    <th class="sorttable_numeric">Rate</th>
+                    <th>Date Grabbed</th>
+                </tr>
+            {% endif %}
+
+
+        </thead>
+
+        <tbody>
+            {% if merchants %}
+             {% for merchant in merchants %}
+                <tr>
+                    {% for item in merchant %}
+                        <td>{{ item }}</td>
+                    {% endfor %}
+
+                    <td>{{ date  }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="3">No merchants yet</td></tr>
+            {% endfor %}
+            {% endif %}
+
+        </tbody>
+    </table>
+
+
+
+{% endblock content %}
+
+{% block tail_script %}
+<script>
+function showResult(result_id) {
+    window.location = '/' + result_id;
+}
+</script>
+
+
+{% endblock tail_script %}

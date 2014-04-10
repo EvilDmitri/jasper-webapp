@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block style_block %}
+    <style type="text/css">
+        table.table { width: 60%; }
+    </style>
+{% endblock %}
+
+{% block content %}
+
+
+
+
+    <h3>
+        Changes from previous to last scrape
+    </h3>
+
+    <table class="table table-bordered table-striped sortable" >
+        <thead style="background-color:#eee; font-weight: bold; cursor: default;">
+
+
+
+        </thead>
+
+        <tbody>
+                {% for site in sites %}
+                    <tr>
+                        <td>{{ site }}</td>
+                        {% set changes = sites[site] %}
+
+                        {% for change in changes %}
+                            <td>
+                                {{ change }}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+
+        </tbody>
+    </table>
+
+
+
+{% endblock content %}
+
+{% block tail_script %}
+<script>
+function showResult(result_id) {
+    window.location = '/' + result_id;
+}
+</script>
+{% endblock tail_script %}

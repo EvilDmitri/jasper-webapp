@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block style_block %}
+    <style type="text/css">
+        table.table { width: 60%; }
+    </style>
+{% endblock %}
+
+{% block content %}
+
+    <div class="h1" id="title">All results</div>
+    <div>&nbsp;</div>
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Scraped on</th>
+                <th>Scraped from</th>
+                <th>&nbsp;</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for result in results %}
+            {% set result_id = result.key.id() %}
+
+                <script>
+                    function showMerchants(result_id) {
+                        window.location.href = '/'+result_id;
+                    }
+                </script>
+            <tr onclick="showMerchants({{ result_id }});">
+                <td >{{ result_id }}</td>
+                <td class="nowrap">{{ result.timestamp.strftime('%b %d, %Y %I:%M %p') }}</td>
+                <td class="nowrap">{{ result.site_name }}</td>
+                <td>
+                    <form method="post" action="{{ url_for('delete_result', result_id=result_id) }}">
+                        <button class="btn">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7">No results</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+
+
+{% endblock content %}
+
+{% block tail_script %}
+
+{% endblock tail_script %}

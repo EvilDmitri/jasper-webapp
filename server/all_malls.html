@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block style_block %}
+    <style type="text/css">
+        table.table { width: 60%; }
+    </style>
+{% endblock %}
+
+{% block content %}
+
+
+
+
+    <h3>
+        Results from all sources from the last time {% if date %}
+                                                    (Now is
+                                                    {{ date }}
+                                                    )
+                                              {% endif %}
+    </h3>
+
+    <table class="table table-bordered table-striped sortable" >
+        <thead style="background-color:#eee; font-weight: bold; cursor: default;">
+            {% if site == '' %}
+                <tr>
+                    <th>Vendor</th>
+
+                    {% for header in headers %}
+                        <th>{{ headers[header] }}</th>
+                    {% endfor %}
+                </tr>
+            {% endif %}
+
+
+        </thead>
+
+        <tbody>
+            {% if data %}
+                {% for vendor in data %}
+                    <tr>
+                        <td>{{ vendor }}</td>
+                        {% set rates = data[vendor] %}
+                        {% for rate in rates %}
+                            <td class="sorttable_numeric">{{ rates[rate] }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr><td colspan="3">No data on this date - {{ date }}</td></tr>
+            {% endif %}
+
+        </tbody>
+    </table>
+
+
+
+{% endblock content %}
+
+{% block tail_script %}
+<script>
+function showResult(result_id) {
+    window.location = '/' + result_id;
+}
+</script>
+{% endblock tail_script %}

@@ -1,0 +1,63 @@
+<div class="navbar navbar-inverse navbar-fixed-top">
+    <div class="navbar-inner">
+        <div class="container">
+            <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </a>
+            <a class="brand" href="/">Rewards</a>
+            <div class="nav-collapse">
+                <ul class="nav">
+                    <li class="navbar-link">
+                        <a href="/results">All Data</a>
+                    </li>
+                    <li class="navbar-link">
+                        <a href="/all_malls">All Malls</a>
+                    </li>
+                    <li class="navbar-link">
+                        <a href="/compare">Compare</a>
+                    </li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                            Scrape
+                            <b class="caret"></b>
+                        </a>
+                        <ul class="dropdown-menu">
+                            {% for site in site_names %}
+                                <li><a href="" onclick="event.preventDefault(); startGrabber('{{ site }}');">Scrape {{ site }}</a></li>
+                            {% endfor %}
+                        <li class="divider"></li>
+                            <li><a href="">Scrape more</a></li>
+                        </ul>
+                    </li>
+
+
+                </ul>
+            </div><!--/.nav-collapse -->
+        </div><!-- /.navbar .container -->
+    </div><!-- /.navbar-inner -->
+</div><!-- /navbar -->
+
+<script>
+function startGrabber(site_name) {
+    document.getElementById('title').innerHTML = 'Scraping... Please wait...';
+    var xmlhttp;
+    if (window.XMLHttpRequest) {// code for IE7+, Firefox, Chrome, Opera, Safari
+        xmlhttp=new XMLHttpRequest();
+    }
+    else {// code for IE6, IE5
+        xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+    }
+
+    xmlhttp.onreadystatechange=function() {
+      if (xmlhttp.readyState==4 && xmlhttp.status==200) {
+          window.location.href = '/';
+      }
+    };
+    xmlhttp.open("POST","/grab",true);
+    xmlhttp.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+    xmlhttp.send('&site_name=' + site_name);
+}
+
+</script>

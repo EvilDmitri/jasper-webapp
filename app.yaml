@@ -1,0 +1,42 @@
+application: getta-web
+
+version: use-version-arg
+
+runtime: python27
+api_version: 1
+
+threadsafe: true
+
+libraries:
+- name: webapp2
+  version: "2.5.1"
+- name: markupsafe
+  version: "0.15"
+- name: setuptools
+  version: "0.6c11"
+- name: jinja2
+  version: "2.6"
+- name: lxml
+  version: '2.3'
+
+handlers:
+- url: /static
+  static_dir: client
+
+- url: /css
+  static_dir: client/css
+
+- url: /images
+  static_dir: client/images
+
+- url: /js
+  static_dir: client/js
+
+- url: /font
+  static_dir: client/font
+
+# dynamic handlers
+- url: /.*
+  script: main.app
+  secure: always
+
