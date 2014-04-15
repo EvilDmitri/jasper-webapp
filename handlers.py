@@ -27,7 +27,6 @@ jinja_environment = jinja2.Environment(autoescape=True,
                                        'server')))
 
 
-
 class BaseRequestHandler(webapp2.RequestHandler):
     def dispatch(self):
         # Get a session store for this request.
@@ -106,23 +105,21 @@ class ProfileHandler(BaseRequestHandler):
             self.redirect('/')
 
 
-class JobsHandler(BaseRequestHandler):
+class LoginHandler(BaseRequestHandler):
     def get(self):
         """Handles GET /profile"""
         if self.logged_in:
-            self.render('jobs.html', {
-                'user': self.current_user,
-                'session': self.auth.get_user_by_session()
-            })
-        else:
             self.redirect('/')
+            print 'ups'
+        else:
+            self.render('login.html', {})
 
 
 class ResultsHandler(BaseRequestHandler):
     def get(self):
         """Handles GET /index and /"""
         if self.logged_in:
-            self.redirect('/jobs')
+            self.redirect('/login')
         else:
             results = ResultModel.query().order(-ResultModel.timestamp).fetch()
             values = {'site_names': URLS,
@@ -136,7 +133,7 @@ class ShowResultHandler(BaseRequestHandler):
     def get(self, result_id):
         """Handles GET /index and /"""
         if self.logged_in:
-            self.redirect('/jobs')
+            self.redirect('/login')
         else:
             result = ResultModel.get_by_id(result_id)
             result = result.merchants
@@ -146,7 +143,8 @@ class ShowResultHandler(BaseRequestHandler):
             for string in data:
                 data = string.split(r'\t')
                 merchants[data[0]] = data[1]
-            values = {'site_names': URLS,
+            values = {'user': self.current_user,
+                      'site_names': URLS,
                       'merchants': merchants
                       }
             # self.session.add_flash('Some message', level='error')
@@ -157,21 +155,22 @@ class IndexHandler(BaseRequestHandler):
     def get(self):
         """Handles GET /index and /"""
         if self.logged_in:
-            self.redirect('/jobs')
-        else:
             results = ResultModel.query().order(-ResultModel.timestamp).fetch()
-            values = {'site_names': URLS,
+            values = {'user': self.current_user,
+                      'site_names': URLS,
                       'results': results
                       }
             # self.session.add_flash('Some message', level='error')
             self.render('index.html', values)
+        else:
+            self.redirect('/login')
 
 
 class IndexResultHandler(BaseRequestHandler):
     def get(self):
-        """Handles GET /index and /"""
+        """Handles """
         if self.logged_in:
-            self.redirect('/jobs')
+            self.redirect('/login')
         else:
             result_id = self.request.get('result_id')
             result = ResultModel.get_by_id(int(result_id))
@@ -189,7 +188,8 @@ class IndexResultHandler(BaseRequestHandler):
                 data.append(items)
 
             results = ResultModel.query().order(-ResultModel.timestamp).fetch()
-            values = {'site_names': URLS,
+            values = {'user': self.current_user,
+                      'site_names': URLS,
                       'results': results,
                       'merchants': data,
                       'date': date,
@@ -203,7 +203,7 @@ class AllMallsHandler(BaseRequestHandler):
     def get(self):
         """Handles GET /index and /"""
         if self.logged_in:
-            self.redirect('/jobs')
+            self.redirect('/login')
         else:
             results = ResultModel.query().order(-ResultModel.timestamp).fetch()
             values = {'site_names': URLS,
@@ -218,7 +218,7 @@ class AllMallsHandler(BaseRequestHandler):
 class GrabHandler(BaseRequestHandler):
     def post(self):
         if self.logged_in:
-            self.redirect('/jobs')
+            self.redirect('/login')
         else:
             site_name = self.request.get('site_name')
             print site_name
@@ -245,7 +245,7 @@ class GrabHandler(BaseRequestHandler):
 class GrabDailyHandler(BaseRequestHandler):
     def get(self):
         if self.logged_in:
-            self.redirect('/jobs')
+            self.redirect('/login')
         else:
             success = 0
             for site_name in URLS:
@@ -316,7 +316,7 @@ class CheckModificationHandler(BaseRequestHandler):
         sites = SitesModel.query().order().fetch()
         changed_sites = OrderedDict([[x, ' '] for x in URLS])
         if self.logged_in:
-            self.redirect('/jobs')
+            self.redirect('/login')
         else:
             for site in sites:
                 results = site.results
@@ -376,7 +376,7 @@ class CheckModificationHandler(BaseRequestHandler):
 class SearchResultByTimeHandler(BaseRequestHandler):
     def get(self):
         if self.logged_in:
-            self.redirect('/jobs')
+            self.redirect('/login')
         else:
             time = self.request.form['time']
             date = self.request.form['date']
@@ -404,7 +404,7 @@ class TradiesHandler(BaseRequestHandler):
     def get(self):
         """Handles GET /tradies"""
         if self.logged_in:
-            self.redirect('/jobs')
+            self.redirect('/login')
         else:
             self.render('tradies.html')
 
@@ -413,7 +413,7 @@ class FaqsHandler(BaseRequestHandler):
     def get(self):
         """Handles GET /faqs"""
         if self.logged_in:
-            self.redirect('/jobs')
+            self.redirect('/login')
         else:
             self.render('faqs.html')
 
@@ -537,7 +537,7 @@ class AuthHandler(BaseRequestHandler, SimpleAuthHandler):
         self.session.add_flash(auth_info, 'auth_info - from _on_signin(...)')
 
         # Go to the jobs page
-        self.redirect('/jobs')
+        self.redirect('/login')
 
     def logout(self):
         self.auth.unset_session()

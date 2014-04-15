@@ -32,6 +32,25 @@
                         </ul>
                     </li>
 
+                    {% if user %}
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                            {{ user.name }}
+                            <b class="caret"></b>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/profile">Profile</a>
+                            </li>
+                            <li class="divider"></li>
+                            <li><a href="/logout">Logout</a>
+                            </li>
+                        </ul>
+                    </li>
+                    {% else %}
+                        <li><a href="/auth/google">Login via Google</a>
+                        </li>
+
+                    {% endif %}
 
                 </ul>
             </div><!--/.nav-collapse -->
