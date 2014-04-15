@@ -16,7 +16,7 @@
                 <th>ID</th>
                 <th>Scraped on</th>
                 <th>Scraped from</th>
-                <th>&nbsp;</th>
+{#                <th>&nbsp;</th>#}
             </tr>
         </thead>
         <tbody>
@@ -32,11 +32,11 @@
                 <td >{{ result_id }}</td>
                 <td class="nowrap">{{ result.timestamp.strftime('%b %d, %Y %I:%M %p') }}</td>
                 <td class="nowrap">{{ result.site_name }}</td>
-                <td>
-                    <form method="post" action="{{ url_for('delete_result', result_id=result_id) }}">
-                        <button class="btn">Delete</button>
-                    </form>
-                </td>
+{#                <td>#}
+{#                    <form method="post" action="{{ url_for('delete_result', result_id=result_id) }}">#}
+{#                        <button class="btn">Delete</button>#}
+{#                    </form>#}
+{#                </td>#}
             </tr>
             {% else %}
             <tr><td colspan="7">No results</td></tr>
