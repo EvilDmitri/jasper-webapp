@@ -6,6 +6,7 @@ import os
 import datetime
 
 from google.appengine.ext import ndb
+from google.appengine.runtime.apiproxy_errors import CapabilityDisabledError
 from config import URLS
 from grabber.scrape import get_data_from_html, XmlGrabber, BestbuyGrabber, RetailersGrabber, ShopGrabber, \
     UltimateRewardsGrabber
@@ -119,36 +120,44 @@ class ResultsHandler(BaseRequestHandler):
     def get(self):
         """Handles GET /index and /"""
         if self.logged_in:
-            self.redirect('/login')
-        else:
             results = ResultModel.query().order(-ResultModel.timestamp).fetch()
-            values = {'site_names': URLS,
+            values = {'user': self.current_user,
+                      'site_names': URLS,
                       'results': results
                       }
             # self.session.add_flash('Some message', level='error')
             self.render('list_data.html', values)
-
-
-class ShowResultHandler(BaseRequestHandler):
-    def get(self, result_id):
-        """Handles GET /index and /"""
-        if self.logged_in:
-            self.redirect('/login')
         else:
-            result = ResultModel.get_by_id(result_id)
-            result = result.merchants
-            data = result.split(r'\n')
-            merchants = dict()
+            self.redirect('/login')
 
-            for string in data:
-                data = string.split(r'\t')
-                merchants[data[0]] = data[1]
-            values = {'user': self.current_user,
-                      'site_names': URLS,
-                      'merchants': merchants
-                      }
-            # self.session.add_flash('Some message', level='error')
-            self.render('list_data.html', values)
+
+class DeleteResultHandler(BaseRequestHandler):
+    def post(self, result_id):
+        """Delete a results object"""
+        if self.logged_in:
+            result = ResultModel.get_by_id(int(result_id))
+
+            # Should delete result from site model
+            site = result.site_name
+            print site
+            q = "SELECT * FROM SitesModel  WHERE site_name = '%s'" % site
+            data_entry = ndb.gql(q).fetch()[0]
+            print data_entry
+            results = data_entry.results.split('/')
+            for result in results:
+                if str(result_id) in result:
+                    results.remove(result)
+            data_entry.results = '/'.join(results)
+            data_entry.put()
+
+            try:
+                result.key.delete()
+                self.session.add_flash(u'result %s successfully deleted.' % result_id, level='success')
+            except CapabilityDisabledError:
+                self.session.add_flash(u'App Engine Datastore is currently in read-only mode.', level='error')
+            return self.redirect('/results')
+        else:
+            self.redirect('/login')
 
 
 class IndexHandler(BaseRequestHandler):
@@ -167,12 +176,9 @@ class IndexHandler(BaseRequestHandler):
 
 
 class IndexResultHandler(BaseRequestHandler):
-    def get(self):
+    def get(self, result_id):
         """Handles """
         if self.logged_in:
-            self.redirect('/login')
-        else:
-            result_id = self.request.get('result_id')
             result = ResultModel.get_by_id(int(result_id))
 
             date = result.timestamp
@@ -197,46 +203,97 @@ class IndexResultHandler(BaseRequestHandler):
                       }
             # self.session.add_flash('Some message', level='error')
             self.render('index.html', values)
+        else:
+            self.redirect('/login')
 
 
 class AllMallsHandler(BaseRequestHandler):
     def get(self):
-        """Handles GET /index and /"""
+        """Response all malls from last job"""
         if self.logged_in:
-            self.redirect('/login')
-        else:
+
+            start_time = datetime.datetime.now()
+
+            date = start_time.strftime('%Y-%m-%d %H:%M:%S')
+
             results = ResultModel.query().order(-ResultModel.timestamp).fetch()
-            values = {'site_names': URLS,
-                      'results': results
+            last_results = results[-10:]
+            data_entries = last_results
+
+            sites = OrderedDict([[x, '-'] for x in URLS])
+            headers = OrderedDict([[x, '-'] for x in URLS])
+            data = dict()
+            for entry in data_entries:
+                date_scraped = entry.timestamp
+                scraped_from = entry.site_name
+                # Table header
+                headers[scraped_from] = ('\n'.join([scraped_from, date_scraped.strftime('%Y-%m-%d %H:%M:%S')]))
+
+                vendors = entry.merchants
+                vendors = vendors.split(r'\n')
+
+                for vendor in vendors:
+                    result = vendor.split(r'\t')
+
+                    name = result[0]
+                    try:
+                        rate = result[1]
+                    except ValueError:
+                        rate = ' '
+
+                    try:    # If this vendor is listed
+                        rates = data[name]
+                    except KeyError:
+                        rates = sites
+                    rates[scraped_from] = rate
+
+                    data[name] = rates
+
+            # for item in data:
+            #     print item
+            #     print '----------'
+            #     costs = data[item]
+            #     for d in costs:
+            #         cost = get_data_from_html(costs[d])
+            #         if cost == u' ':
+            #             pass
+            #         else:
+            #             print d, cost
+            # print '==================='
+            print headers
+            values = {'user': self.current_user,
+                      'site_names': URLS,
+                      'date': date,
+                      'data': data,
+                      'site': ''
                       }
-            # self.session.add_flash('Some message', level='error')
-            self.render('index.html', values)
+            return self.render('all_malls.html', values)
+        else:
+            self.redirect('/login')
+
 
 #------------------------------------------
 # Method run grabber from web-page
 #------------------------------------------
 class GrabHandler(BaseRequestHandler):
     def post(self):
-        if self.logged_in:
-            self.redirect('/login')
+        site_name = self.request.get('site_name')
+        print site_name
+
+        if 'discover.com' in site_name:
+            grabber = XmlGrabber(site_name)
+        elif 'shop.upromise.com' in site_name:
+            grabber = ShopGrabber(site_name)
+        elif 'www.bestbuy.com' in site_name:
+            grabber = BestbuyGrabber(site_name)
+        elif site_name in ['shop.amtrakguestrewards.com', 'shop.lifemiles.com']:
+            grabber = RetailersGrabber(site_name)
         else:
-            site_name = self.request.get('site_name')
-            print site_name
+            grabber = UltimateRewardsGrabber(site_name)
 
-            if 'discover.com' in site_name:
-                grabber = XmlGrabber(site_name)
-            elif 'shop.upromise.com' in site_name:
-                grabber = ShopGrabber(site_name)
-            elif 'www.bestbuy.com' in site_name:
-                grabber = BestbuyGrabber(site_name)
-            elif site_name in ['shop.amtrakguestrewards.com', 'shop.lifemiles.com']:
-                grabber = RetailersGrabber(site_name)
-            else:
-                grabber = UltimateRewardsGrabber(site_name)
-
-            result_id = grabber.grab()
-            self.session.add_flash(u'Successfully grabbed', level='success')
-            return result_id
+        result_id = grabber.grab()
+        self.session.add_flash(u'Successfully grabbed', level='success')
+        return result_id
 
 
 #------------------------------------------
@@ -244,30 +301,27 @@ class GrabHandler(BaseRequestHandler):
 #------------------------------------------
 class GrabDailyHandler(BaseRequestHandler):
     def get(self):
-        if self.logged_in:
-            self.redirect('/login')
-        else:
-            success = 0
-            for site_name in URLS:
-                if 'discover.com' in site_name:
-                    grabber = XmlGrabber(site_name)
-                elif 'shop.upromise.com' in site_name:
-                    grabber = ShopGrabber(site_name)
+        success = 0
+        for site_name in URLS:
+            if 'discover.com' in site_name:
+                grabber = XmlGrabber(site_name)
+            elif 'shop.upromise.com' in site_name:
+                grabber = ShopGrabber(site_name)
 
-                elif site_name in ['shop.amtrakguestrewards.com', 'shop.lifemiles.com']:
-                    grabber = RetailersGrabber(site_name)
-                # elif 'www.bestbuy.com' in site_name:
-                #     grabber = BestbuyGrabber(site_name)
-                else:
-                    grabber = UltimateRewardsGrabber(site_name)
+            elif site_name in ['shop.amtrakguestrewards.com', 'shop.lifemiles.com']:
+                grabber = RetailersGrabber(site_name)
+            # elif 'www.bestbuy.com' in site_name:
+            #     grabber = BestbuyGrabber(site_name)
+            else:
+                grabber = UltimateRewardsGrabber(site_name)
 
-                if grabber.grab():
-                    success += 1
+            if grabber.grab():
+                success += 1
 
-            # Now it's time to check if data is changed since last scrape and if so post an email
+        # Now it's time to check if data is changed since last scrape and if so post an email
 
-            checker = CheckModificationHandler()
-            checker.get()
+        checker = CheckModificationHandler()
+        checker.get()
         return 'OK'
 
 
@@ -313,11 +367,9 @@ class CheckModificationHandler(BaseRequestHandler):
         return list_of_changes
 
     def get(self):
-        sites = SitesModel.query().order().fetch()
-        changed_sites = OrderedDict([[x, ' '] for x in URLS])
         if self.logged_in:
-            self.redirect('/login')
-        else:
+            sites = SitesModel.query().order().fetch()
+            changed_sites = OrderedDict([[x, ' '] for x in URLS])
             for site in sites:
                 results = site.results
                 lasts = results.split('/')
@@ -364,20 +416,21 @@ class CheckModificationHandler(BaseRequestHandler):
 
                 stats = SendStatistics()
                 stats.post(data=result)
-        values = {'site_names': URLS,
-                  'results': results
-                  }
-        # self.session.add_flash('Some message', level='error')
-        self.render('index.html', values)
-
+            values = {'user': self.current_user,
+                      'site_names': URLS,
+                      'sites': changed_sites,
+                      'site': ''
+                      }
+            # self.session.add_flash('Some message', level='error')
+            self.render('index.html', values)
+        else:
+            self.redirect('/login')
 
 
 #------------------------------------------
 class SearchResultByTimeHandler(BaseRequestHandler):
-    def get(self):
+    def post(self):
         if self.logged_in:
-            self.redirect('/login')
-        else:
             time = self.request.form['time']
             date = self.request.form['date']
             try:
@@ -398,24 +451,9 @@ class SearchResultByTimeHandler(BaseRequestHandler):
                       }
             # self.session.add_flash('Some message', level='error')
             self.render('list_data.html', values)
-
-
-class TradiesHandler(BaseRequestHandler):
-    def get(self):
-        """Handles GET /tradies"""
-        if self.logged_in:
-            self.redirect('/login')
         else:
-            self.render('tradies.html')
-
-
-class FaqsHandler(BaseRequestHandler):
-    def get(self):
-        """Handles GET /faqs"""
-        if self.logged_in:
             self.redirect('/login')
-        else:
-            self.render('faqs.html')
+
 
 
 class AuthHandler(BaseRequestHandler, SimpleAuthHandler):

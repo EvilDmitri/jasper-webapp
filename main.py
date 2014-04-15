@@ -22,26 +22,34 @@ app_config = {
 
 # Map URLs to handlers
 routes = [
+    Route(r'/', handler='handlers.IndexHandler',
+          name='index'),
+    Route(r'/<result_id:\d+>', handler='handlers.IndexResultHandler',
+          name='index_result'),
+    Route(r'/results', handler='handlers.ResultsHandler',
+          name='results'),
 
-    Route('/tradies', handler='handlers.TradiesHandler', name='tradies'),
-    Route('/faqs', handler='handlers.FaqsHandler', name='faqs'),
-    Route('/login', handler='handlers.LoginHandler', name='jobs'),
+    Route(r'/delete/<result_id:\d+>', handler='handlers.DeleteResultHandler',
+          name='delete_result', methods=['GET', 'POST']),
+    Route(r'/all_malls', handler='handlers.AllMallsHandler',
+          name='all_malls'),
 
+    Route(r'/grab', handler='handlers.GrabHandler',
+          name='grab', methods=['POST']),
+    Route(r'/grabber/daily', handler='handlers.GrabDailyHandler',
+          name='grab_daily', methods=['GET']),
 
+    Route(r'/compare', handler='handlers.CheckModificationHandler',
+          name='search', methods=['GET', 'POST']),
+    Route(r'/search', handler='handlers.SearchHandler',
+          name='search', methods=['GET', 'POST']),
 
-    #-----------------------------------------------------------
-    Route(r'/', handler='handlers.IndexHandler', name='index'),
-    Route(r'/<result_id:\d+>', handler='handlers.IndexResultHandler', name='index_result'),
-    Route(r'/results', handler='handlers.ResultsHandler', name='results'),
-    Route(r'/result/<result_id:\d+>', handler='handlers.ShowResultHandler', name='show_result'),
-    Route(r'/all_malls', handler='handlers.AllMallsHandler', name='all_malls'),
-
-    Route(r'/grab', handler='handlers.GrabHandler', name='grab', methods=['POST']),
-    Route(r'/grabber/daily', handler='handlers.GrabDailyHandler', name='grab_daily', methods=['GET']),
-
-    Route(r'/logout', handler='handlers.AuthHandler:logout', name='logout'),
-    Route(r'/profile', handler='handlers.ProfileHandler', name='profile'),
-
+    Route('/login', handler='handlers.LoginHandler',
+          name='login'),
+    Route(r'/logout', handler='handlers.AuthHandler:logout',
+          name='logout'),
+    Route(r'/profile', handler='handlers.ProfileHandler',
+          name='profile'),
     Route(r'/auth/<provider>',
           handler='handlers.AuthHandler:_simple_auth', name='auth_login'),
     Route(r'/auth/<provider>/callback',

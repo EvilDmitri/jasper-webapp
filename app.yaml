@@ -1,6 +1,6 @@
-application: getta-web
+application: chasing-mallpoints
 
-version: use-version-arg
+version: 2
 
 runtime: python27
 api_version: 1
@@ -12,12 +12,10 @@ libraries:
   version: "2.5.1"
 - name: markupsafe
   version: "0.15"
-- name: setuptools
-  version: "0.6c11"
 - name: jinja2
   version: "2.6"
 - name: lxml
-  version: '2.3'
+  version: latest
 
 handlers:
 - url: /static
@@ -38,5 +36,4 @@ handlers:
 # dynamic handlers
 - url: /.*
   script: main.app
-  secure: always
 

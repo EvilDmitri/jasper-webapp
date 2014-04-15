@@ -11,8 +11,8 @@ ON_DEV = os.environ.get('SERVER_SOFTWARE', '').startswith('Dev')
 SESSION_KEY = "6qzv3s4qzg6g4qzgv3s"
 
 # Google APIs
-GOOGLE_APP_ID = '532428771507.apps.googleusercontent.com'
-GOOGLE_APP_SECRET = 'gcIqx7Zo7vuczq5UhXaZO-FH'
+GOOGLE_APP_ID = '634302217031.apps.googleusercontent.com'
+GOOGLE_APP_SECRET = 'NDFpPP-81H_8Pq9jQfJmjvcH'
 #
 # # Facebook auth apis
 # if ON_DEV:
