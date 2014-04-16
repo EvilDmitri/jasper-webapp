@@ -431,8 +431,8 @@ class CheckModificationHandler(BaseRequestHandler):
 class SearchResultByTimeHandler(BaseRequestHandler):
     def post(self):
         if self.logged_in:
-            time = self.request.form['time']
-            date = self.request.form['date']
+            time = self.request.POST.get('time')
+            date = self.request.POST.get('date')
             try:
                 end_date = datetime.datetime.strptime(date + ' 00:00', '%m/%d/%Y %H:%M')
                 start_date = end_date + datetime.timedelta(days=1)
