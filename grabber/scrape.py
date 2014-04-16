@@ -230,7 +230,7 @@ class RetailersGrabber(Grabber):
             self.merchants_data.append(m)
 
         try:
-            next_page = tree.xpath('//div[@class="paging"]/ul/li[@class="ne"]/a')[0]
+            next_page = tree.xpath('//div[@class="paging"]/ul/li[@class="next"]/a')[0]
             self.url = 'http://shop.amtrakguestrewards.com/' + next_page.values()[0]
             self.grab()
         except IndexError:
