@@ -110,8 +110,12 @@ class LoginHandler(BaseRequestHandler):
     def get(self):
         """Handles GET /profile"""
         if self.logged_in:
-            self.redirect('/')
-            print 'ups'
+            name = self.current_user.name.encode('utf8')
+            if name == 'Дмитрий Брач' or name == 'Jasper Moy':
+                self.redirect('/admin')
+            else:
+                self.redirect('/logout')
+                return
         else:
             self.render('login.html', {})
 
@@ -119,16 +123,14 @@ class LoginHandler(BaseRequestHandler):
 class ResultsHandler(BaseRequestHandler):
     def get(self):
         """Handles GET /index and /"""
-        if self.logged_in:
-            results = ResultModel.query().order(-ResultModel.timestamp).fetch()
-            values = {'user': self.current_user,
-                      'site_names': URLS,
-                      'results': results
-                      }
-            # self.session.add_flash('Some message', level='error')
-            self.render('list_data.html', values)
-        else:
-            self.redirect('/login')
+        results = ResultModel.query().order(-ResultModel.timestamp).fetch()
+        values = {
+                  'site_names': URLS,
+                  'results': results
+                  }
+        # self.session.add_flash('Some message', level='error')
+        self.render('list_data.html', values)
+
 
 
 class DeleteResultHandler(BaseRequestHandler):
@@ -163,113 +165,124 @@ class DeleteResultHandler(BaseRequestHandler):
 class IndexHandler(BaseRequestHandler):
     def get(self):
         """Handles GET /index and /"""
-        if self.logged_in:
-            results = ResultModel.query().order(-ResultModel.timestamp).fetch()
-            values = {'user': self.current_user,
-                      'site_names': URLS,
-                      'results': results
-                      }
-            # self.session.add_flash('Some message', level='error')
-            self.render('index.html', values)
-        else:
-            self.redirect('/login')
+        results = ResultModel.query().order(-ResultModel.timestamp).fetch()
+        values = {
+                  'site_names': URLS,
+                  'results': results
+                  }
+        # self.session.add_flash('Some message', level='error')
+        self.render('index.html', values)
+
 
 
 class IndexResultHandler(BaseRequestHandler):
     def get(self, result_id):
         """Handles """
+        result = ResultModel.get_by_id(int(result_id))
+
+        date = result.timestamp
+
+        data = []
+        site = result.site_name
+        result = result.merchants
+        lines = result.split(r'\n')
+        for line in lines:
+            items = line.split(r'\t')
+            if len(items) == 6:
+                site = 'apple'      # This is needed for 'www.bestbuy.com'
+            data.append(items)
+
+        results = ResultModel.query().order(-ResultModel.timestamp).fetch()
+        values = {
+                  'site_names': URLS,
+                  'results': results,
+                  'merchants': data,
+                  'date': date,
+                  'site': site
+                  }
+        # self.session.add_flash('Some message', level='error')
+        self.render('index.html', values)
+
+
+class AdminHandler(BaseRequestHandler):
+    def get(self):
+        """Page to delete some results"""
         if self.logged_in:
-            result = ResultModel.get_by_id(int(result_id))
+            name = self.current_user.name.encode('utf8')
+            if name == 'Дмитрий Брач' or name == 'Jasper Moy':
+                results = ResultModel.query().order(-ResultModel.timestamp).fetch()
+                values = {'user': self.current_user,
+                          'site_names': URLS,
+                          'results': results
+                          }
+                # self.session.add_flash('Some message', level='error')
+                self.render('admin.html', values)
+            else:
+                self.redirect('/logout')
+                return
 
-            date = result.timestamp
-
-            data = []
-            site = result.site_name
-            result = result.merchants
-            lines = result.split(r'\n')
-            for line in lines:
-                items = line.split(r'\t')
-                if len(items) == 6:
-                    site = 'apple'      # This is needed for 'www.bestbuy.com'
-                data.append(items)
-
-            results = ResultModel.query().order(-ResultModel.timestamp).fetch()
-            values = {'user': self.current_user,
-                      'site_names': URLS,
-                      'results': results,
-                      'merchants': data,
-                      'date': date,
-                      'site': site
-                      }
-            # self.session.add_flash('Some message', level='error')
-            self.render('index.html', values)
         else:
             self.redirect('/login')
-
 
 class AllMallsHandler(BaseRequestHandler):
     def get(self):
         """Response all malls from last job"""
-        if self.logged_in:
+        start_time = datetime.datetime.now()
 
-            start_time = datetime.datetime.now()
+        date = start_time.strftime('%Y-%m-%d %H:%M:%S')
 
-            date = start_time.strftime('%Y-%m-%d %H:%M:%S')
+        results = ResultModel.query().order(-ResultModel.timestamp).fetch()
+        last_results = results[-10:]
+        data_entries = last_results
 
-            results = ResultModel.query().order(-ResultModel.timestamp).fetch()
-            last_results = results[-10:]
-            data_entries = last_results
+        sites = OrderedDict([[x, '-'] for x in URLS])
+        headers = OrderedDict([[x, '-'] for x in URLS])
+        data = dict()
+        for entry in data_entries:
+            date_scraped = entry.timestamp
+            scraped_from = entry.site_name
+            # Table header
+            headers[scraped_from] = ('\n'.join([scraped_from, date_scraped.strftime('%Y-%m-%d %H:%M:%S')]))
 
-            sites = OrderedDict([[x, '-'] for x in URLS])
-            headers = OrderedDict([[x, '-'] for x in URLS])
-            data = dict()
-            for entry in data_entries:
-                date_scraped = entry.timestamp
-                scraped_from = entry.site_name
-                # Table header
-                headers[scraped_from] = ('\n'.join([scraped_from, date_scraped.strftime('%Y-%m-%d %H:%M:%S')]))
+            vendors = entry.merchants
+            vendors = vendors.split(r'\n')
 
-                vendors = entry.merchants
-                vendors = vendors.split(r'\n')
+            for vendor in vendors:
+                result = vendor.split(r'\t')
 
-                for vendor in vendors:
-                    result = vendor.split(r'\t')
+                name = result[0]
+                try:
+                    rate = result[1]
+                except ValueError:
+                    rate = ' '
 
-                    name = result[0]
-                    try:
-                        rate = result[1]
-                    except ValueError:
-                        rate = ' '
+                try:    # If this vendor is listed
+                    rates = data[name]
+                except KeyError:
+                    rates = sites
+                rates[scraped_from] = rate
 
-                    try:    # If this vendor is listed
-                        rates = data[name]
-                    except KeyError:
-                        rates = sites
-                    rates[scraped_from] = rate
+                data[name] = rates
 
-                    data[name] = rates
-
-            # for item in data:
-            #     print item
-            #     print '----------'
-            #     costs = data[item]
-            #     for d in costs:
-            #         cost = get_data_from_html(costs[d])
-            #         if cost == u' ':
-            #             pass
-            #         else:
-            #             print d, cost
-            # print '==================='
-            print headers
-            values = {'user': self.current_user,
-                      'site_names': URLS,
-                      'date': date,
-                      'data': data,
-                      'site': ''
-                      }
-            return self.render('all_malls.html', values)
-        else:
-            self.redirect('/login')
+        # for item in data:
+        #     print item
+        #     print '----------'
+        #     costs = data[item]
+        #     for d in costs:
+        #         cost = get_data_from_html(costs[d])
+        #         if cost == u' ':
+        #             pass
+        #         else:
+        #             print d, cost
+        # print '==================='
+        # print headers
+        values = {
+                  'site_names': URLS,
+                  'date': date,
+                  'data': data,
+                  'site': ''
+                  }
+        return self.render('all_malls.html', values)
 
 
 #------------------------------------------
@@ -430,30 +443,26 @@ class CheckModificationHandler(BaseRequestHandler):
 #------------------------------------------
 class SearchResultByTimeHandler(BaseRequestHandler):
     def post(self):
-        if self.logged_in:
-            time = self.request.form['time']
-            date = self.request.form['date']
-            try:
-                end_date = datetime.datetime.strptime(date + ' 00:00', '%m/%d/%Y %H:%M')
-                start_date = end_date + datetime.timedelta(days=1)
-                q = "SELECT * FROM ResultModel WHERE timestamp <= DATETIME('%s') AND timestamp >= DATETIME('%s')" % (start_date, end_date)
-                results = ndb.gql(q).fetch()
-            except ValueError:
-                results = ''
+        time = self.request.form['time']
+        date = self.request.form['date']
+        try:
+            end_date = datetime.datetime.strptime(date + ' 00:00', '%m/%d/%Y %H:%M')
+            start_date = end_date + datetime.timedelta(days=1)
+            q = "SELECT * FROM ResultModel WHERE timestamp <= DATETIME('%s') AND timestamp >= DATETIME('%s')" % (start_date, end_date)
+            results = ndb.gql(q).fetch()
+        except ValueError:
+            results = ''
 
-            data = []
-            for result in results:
-                timestamp = result.timestamp.strftime('%b %d, %Y %I:%M %p')
-                if time in timestamp:
-                    data.append(result)
-            values = {'site_names': URLS,
-                      'results': data
-                      }
-            # self.session.add_flash('Some message', level='error')
-            self.render('list_data.html', values)
-        else:
-            self.redirect('/login')
-
+        data = []
+        for result in results:
+            timestamp = result.timestamp.strftime('%b %d, %Y %I:%M %p')
+            if time in timestamp:
+                data.append(result)
+        values = {'site_names': URLS,
+                  'results': data
+                  }
+        # self.session.add_flash('Some message', level='error')
+        self.render('list_data.html', values)
 
 
 class AuthHandler(BaseRequestHandler, SimpleAuthHandler):
@@ -571,15 +580,15 @@ class AuthHandler(BaseRequestHandler, SimpleAuthHandler):
 
         # Remember auth data during redirect, just for this demo. You wouldn't
         # normally do this.
-        self.session.add_flash(data, 'data - from _on_signin(...)')
-        self.session.add_flash(auth_info, 'auth_info - from _on_signin(...)')
+        # self.session.add_flash(data, 'data - from _on_signin(...)')
+        # self.session.add_flash(auth_info, 'auth_info - from _on_signin(...)')
 
         # Go to the jobs page
         self.redirect('/login')
 
     def logout(self):
         self.auth.unset_session()
-        self.redirect('/')
+        self.redirect('/results')
 
     def handle_exception(self, exception, debug):
         logging.error(exception)

@@ -53,7 +53,10 @@ routes = [
     Route(r'/auth/<provider>',
           handler='handlers.AuthHandler:_simple_auth', name='auth_login'),
     Route(r'/auth/<provider>/callback',
-          handler='handlers.AuthHandler:_auth_callback', name='auth_callback')
+          handler='handlers.AuthHandler:_auth_callback', name='auth_callback'),
+
+    Route('/admin', handler='handlers.AdminHandler',
+          name='admin'),
 ]
 
 app = WSGIApplication(routes, config=app_config, debug=True)
