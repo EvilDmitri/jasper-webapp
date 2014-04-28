@@ -41,7 +41,7 @@ routes = [
 
     Route(r'/compare', handler='handlers.CheckModificationHandler',
           name='search', methods=['GET', 'POST']),
-    Route(r'/search', handler='handlers.SearchHandler',
+    Route(r'/search', handler='handlers.SearchResultByTimeHandler',
           name='search', methods=['GET', 'POST']),
 
     Route('/login', handler='handlers.LoginHandler',

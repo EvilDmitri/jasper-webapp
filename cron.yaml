@@ -1,0 +1,10 @@
+cron:
+- description: daily-summary-job
+  url: /grabber/daily
+  schedule: every day 00:00
+  timezone: US/Eastern
+
+- description: daily-summary-job
+  url: /grabber/daily
+  schedule: every day 12:00
+  timezone: US/Eastern
