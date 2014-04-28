@@ -443,8 +443,8 @@ class CheckModificationHandler(BaseRequestHandler):
 #------------------------------------------
 class SearchResultByTimeHandler(BaseRequestHandler):
     def post(self):
-        time = self.request.form['time']
-        date = self.request.form['date']
+        time = self.request.get('time')
+        date = self.request.get('date')
         try:
             end_date = datetime.datetime.strptime(date + ' 00:00', '%m/%d/%Y %H:%M')
             start_date = end_date + datetime.timedelta(days=1)
